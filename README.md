@@ -2,8 +2,7 @@
 
 A daily routine and checklist planner for kids, running from wake-up to bedtime, with separate school-day and holiday schedules that switch automatically.
 
-**[Open the live planner →](#)** *(replace this link with your github.io URL)*
-
+**[Open the live planner →](yosireglobal.github.io/kidsdailyplanner/)** 
 ---
 
 ## What it does
