@@ -222,6 +222,8 @@
 
 <div class="child-tabs" id="childTabs"></div>
 
+<button class="toggle-edit" id="notifyBtn" onclick="requestNotifications()" style="margin-bottom:16px;">🔔 Enable activity alerts</button>
+
 <div class="progress-card">
   <div class="big" id="progressText">0 of 0 done</div>
   <div class="progress-bar-track"><div class="progress-bar-fill" id="progressFill" style="width:0%;"></div></div>
@@ -413,6 +415,8 @@ let termIdCounter = 0;
 let extras = [];
 let extraIdCounter = 0;
 let selectedDate = todayStr();
+let notificationTimers = [];
+let swRegistration = null;
 
 function todayStr(){
   const d = new Date();
@@ -545,6 +549,7 @@ function toggleDone(itemId){
   completions[selectedDate][activeChildId][itemId] = !completions[selectedDate][activeChildId][itemId];
   save();
   renderRoutine();
+  if(selectedDate === todayStr()) scheduleTodayNotifications();
 }
 
 function deleteActivity(id){
@@ -845,8 +850,88 @@ function fmtTime(t){
   return `${h12}:${m} ${ampm}`;
 }
 
+// ---------- Notifications ----------
+function updateNotifyButton(){
+  const btn = document.getElementById('notifyBtn');
+  if(!('Notification' in window)){
+    btn.textContent = '🔕 Alerts not supported on this browser';
+    btn.disabled = true;
+    return;
+  }
+  const perm = Notification.permission;
+  if(perm === 'granted'){
+    btn.textContent = '🔔 Activity alerts are on';
+  } else if(perm === 'denied'){
+    btn.textContent = '🔕 Alerts blocked, check phone notification settings';
+  } else {
+    btn.textContent = '🔔 Enable activity alerts';
+  }
+}
+
+function requestNotifications(){
+  if(!('Notification' in window)){
+    alert('This browser does not support notifications.');
+    return;
+  }
+  Notification.requestPermission().then(() => {
+    updateNotifyButton();
+    scheduleTodayNotifications();
+  });
+}
+
+function clearScheduledNotifications(){
+  notificationTimers.forEach(t => clearTimeout(t));
+  notificationTimers = [];
+}
+
+function fireNotification(icon, activityName){
+  const title = `${icon} Time for: ${activityName}`;
+  const options = { body: "It's on today's routine right now!", icon: 'icon-192.png', badge: 'icon-192.png' };
+  if(swRegistration && swRegistration.showNotification){
+    swRegistration.showNotification(title, options);
+  } else if('Notification' in window && Notification.permission === 'granted'){
+    new Notification(title, options);
+  }
+}
+
+function scheduleTodayNotifications(){
+  clearScheduledNotifications();
+  if(!('Notification' in window) || Notification.permission !== 'granted') return;
+  if(activeChildId === null || activeChildId === undefined) return;
+
+  const today = todayStr();
+  const type = getActiveRoutineType(today);
+  const items = routines[type] || [];
+  const dayCompletions = (completions[today] && completions[today][activeChildId]) || {};
+  const now = new Date();
+
+  items.forEach(item => {
+    if(dayCompletions[item.id]) return;
+    const [h,m] = item.time.split(':').map(Number);
+    const fireAt = new Date();
+    fireAt.setHours(h, m, 0, 0);
+    const delay = fireAt - now;
+    if(delay <= 0) return;
+    const timerId = setTimeout(() => fireNotification(ICONS[item.category] || '⭐', item.activity), delay);
+    notificationTimers.push(timerId);
+  });
+
+  const dow = String(new Date().getDay());
+  extras.filter(e => String(e.day) === dow && (e.childId === 'all' || e.childId == activeChildId)).forEach(e => {
+    const [h,m] = e.time.split(':').map(Number);
+    const fireAt = new Date();
+    fireAt.setHours(h, m, 0, 0);
+    const delay = fireAt - now;
+    if(delay <= 0) return;
+    const timerId = setTimeout(() => fireNotification('⚽', e.name), delay);
+    notificationTimers.push(timerId);
+  });
+}
+
 function renderAll(){
   document.getElementById('dateInput').value = selectedDate;
+  updateNotifyButton();
+  scheduleTodayNotifications();
   renderTermBadge();
   renderChildTabs();
   renderRoutine();
@@ -864,7 +949,9 @@ renderAll();
 
 if('serviceWorker' in navigator){
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('service-worker.js').catch((err) => {
+    navigator.serviceWorker.register('service-worker.js').then((reg) => {
+      swRegistration = reg;
+    }).catch((err) => {
       console.error('Service worker registration failed:', err);
     });
   });
