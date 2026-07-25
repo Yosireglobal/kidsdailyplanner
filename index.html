@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kids Daily Routine</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#ff6b6b">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Kids Routine">
+<style>
+  :root{
+    --coral: #ff6b6b;
+    --sun: #ffd93d;
+    --teal: #4ecdc4;
+    --purple: #a78bfa;
+    --leaf: #6bcf7f;
+    --ink: #2e2a26;
+    --line: #e8e2d8;
+    --bg: #fffaf0;
+  }
+  *{box-sizing:border-box;}
+  body{
+    font-family: 'Segoe UI', Verdana, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    margin:0;
+    padding: 20px 14px 60px;
+    max-width: 640px;
+    margin-left:auto;
+    margin-right:auto;
+  }
+  h1{
+    font-size: 1.6rem;
+    margin-bottom: 4px;
+    text-align:center;
+    background: linear-gradient(90deg, var(--coral), var(--sun), var(--teal), var(--purple));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .sub{
+    text-align:center;
+    color:#8a8175;
+    margin-top:0;
+    margin-bottom: 16px;
+    font-size:0.9rem;
+  }
+
+  .date-nav{
+    display:flex; align-items:center; justify-content:center; gap:10px;
+    margin-bottom:14px;
+  }
+  .date-nav button{
+    background:#fff; border:1px solid var(--line); border-radius:50%;
+    width:34px; height:34px; font-size:1rem; cursor:pointer;
+  }
+  .date-nav input[type=date]{
+    padding:7px 10px; border:1px solid var(--line); border-radius:10px; font-size:0.9rem; font-family:inherit;
+  }
+
+  .term-badge{
+    text-align:center; font-size:0.8rem; padding:6px 12px; border-radius:20px;
+    margin: 0 auto 16px; display:inline-block; font-weight:600;
+  }
+  .term-badge-wrap{text-align:center; margin-bottom:16px;}
+  .term-badge.school{background:var(--teal); color:#fff;}
+  .term-badge.holiday{background:var(--sun); color:#5a4a00;}
+  .term-badge.none{background:#f0ebe0; color:#8a8175;}
+
+  .child-tabs{
+    display:flex; gap:8px; flex-wrap:wrap; justify-content:center; margin-bottom:16px;
+  }
+  .child-tab{
+    padding:7px 16px; border-radius:20px; border:2px solid var(--line);
+    background:#fff; font-size:0.88rem; cursor:pointer; font-weight:600;
+  }
+  .child-tab.active{
+    background: var(--coral); border-color: var(--coral); color:#fff;
+  }
+
+  .progress-card{
+    background:#fff;
+    border:2px solid var(--sun);
+    border-radius:16px;
+    padding:14px 16px;
+    margin-bottom:20px;
+    text-align:center;
+  }
+  .progress-card .big{
+    font-size:1.3rem;
+    font-weight:700;
+  }
+  .progress-bar-track{
+    background:#f0ebe0;
+    border-radius:20px;
+    height:14px;
+    overflow:hidden;
+    margin-top:8px;
+  }
+  .progress-bar-fill{
+    height:100%;
+    background: linear-gradient(90deg, var(--leaf), var(--teal));
+    border-radius:20px;
+    transition: width 0.3s ease;
+  }
+  .stars{font-size:1.1rem; margin-top:6px;}
+
+  .routine-item{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    background:#fff;
+    border:2px solid var(--line);
+    border-radius:14px;
+    padding:12px 14px;
+    margin-bottom:10px;
+  }
+  .routine-item.done{
+    background:#f4fbf4;
+    border-color: var(--leaf);
+  }
+  .routine-item .icon{
+    font-size:1.6rem;
+    flex:0 0 auto;
+  }
+  .routine-item .info{flex:1;}
+  .routine-item .time{
+    font-size:0.75rem;
+    color:#8a8175;
+    font-weight:600;
+  }
+  .routine-item .activity{
+    font-size:1rem;
+  }
+  .routine-item .activity.done{
+    text-decoration: line-through;
+    color:#a89f8f;
+  }
+  .routine-item input[type=checkbox]{
+    width:26px; height:26px; flex:0 0 auto; accent-color: var(--leaf);
+  }
+  .routine-item .edit-controls{
+    flex:0 0 auto;
+    display:flex;
+    gap:2px;
+  }
+  .routine-item .edit-controls button{
+    background:none; border:none; color:#a89f8f; cursor:pointer; font-size:0.95rem; padding:4px 6px;
+  }
+
+  .empty{color:#a89f8f; font-size:0.85rem; text-align:center; padding:16px 0;}
+
+  .card{
+    background:#fff;
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:16px;
+    margin-top:22px;
+  }
+  .card h2{
+    font-size:1.05rem;
+    margin: 0 0 12px;
+  }
+  .row{display:flex; gap:8px; margin-bottom:10px; flex-wrap:wrap; align-items:flex-end;}
+  .row .field{flex:1; min-width:110px;}
+  .field label{font-size:0.75rem; color:#8a8175; display:block; margin-bottom:3px;}
+  .field input[type=text], .field input[type=time], .field input[type=date], .field input[type=number], .field select{
+    width:100%; padding:8px; border:1px solid var(--line); border-radius:8px; font-size:0.9rem;
+    font-family:inherit;
+  }
+  .add-btn{
+    padding:11px 16px; border:none; border-radius:10px;
+    background: var(--coral); color:#fff; font-size:0.9rem; font-weight:600; cursor:pointer;
+  }
+  .add-btn.full{width:100%; margin-top:4px;}
+  .add-btn.secondary{
+    background:#fff; color:#8a8175; border:1px solid var(--line);
+  }
+
+  .list-row{
+    display:flex; align-items:center; gap:10px;
+    background:#fbf8f2; border-radius:10px; padding:9px 12px; margin-bottom:8px;
+  }
+  .list-row .main{flex:1; font-size:0.88rem;}
+  .list-row .meta{font-size:0.74rem; color:#8a8175; margin-top:2px;}
+  .list-row .del{background:none; border:none; color:#a89f8f; cursor:pointer; font-size:1rem; padding:2px 6px;}
+  .child-name-input{
+    flex:1; padding:6px 9px; border:1px solid var(--line); border-radius:8px; font-size:0.88rem;
+  }
+
+  .toggle-edit{
+    display:block;
+    margin: 18px auto 0;
+    background:none;
+    border:1px solid var(--line);
+    padding:8px 16px;
+    border-radius:20px;
+    font-size:0.8rem;
+    color:#8a8175;
+    cursor:pointer;
+  }
+  .section-tag{
+    font-size:0.68rem; padding:2px 8px; border-radius:20px; background:var(--purple); color:#fff;
+  }
+</style>
+</head>
+<body>
+
+<h1>🌟 Daily Routine</h1>
+<p class="sub">From wake up to bedtime, one step at a time.</p>
+
+<div class="date-nav">
+  <button onclick="changeDay(-1)">◀</button>
+  <input type="date" id="dateInput" onchange="onDateChange()">
+  <button onclick="changeDay(1)">▶</button>
+</div>
+
+<div class="term-badge-wrap"><span class="term-badge none" id="termBadge">No term set</span></div>
+
+<div class="child-tabs" id="childTabs"></div>
+
+<div class="progress-card">
+  <div class="big" id="progressText">0 of 0 done</div>
+  <div class="progress-bar-track"><div class="progress-bar-fill" id="progressFill" style="width:0%;"></div></div>
+  <div class="stars" id="starsDisplay"></div>
+</div>
+
+<div id="routineList"></div>
+
+<button class="toggle-edit" onclick="toggleEditPanel()" id="editToggleBtn">✏️ Edit the routines</button>
+<div class="card" id="editPanel" style="display:none;">
+  <h2>Which routine are you editing?</h2>
+  <div class="row">
+    <div class="field">
+      <select id="editRoutineType" onchange="renderEditRoutineList()">
+        <option value="school">📚 School day routine</option>
+        <option value="holiday">🏖️ Holiday routine</option>
+        <option value="default">📋 Default routine (no term set)</option>
+      </select>
+    </div>
+  </div>
+  <div id="editRoutineList"></div>
+
+  <h2 style="margin-top:16px;">Add an activity</h2>
+  <div class="row">
+    <div class="field"><label>Time</label><input type="time" id="newTime"></div>
+    <div class="field" style="flex:2;"><label>Activity</label><input type="text" id="newActivity" placeholder="e.g. Reading time"></div>
+  </div>
+  <div class="row">
+    <div class="field">
+      <label>Category</label>
+      <select id="newCategory">
+        <option value="wake">🌅 Wake up</option>
+        <option value="meal">🍽️ Meal / snack</option>
+        <option value="water">💧 Water break</option>
+        <option value="reading">📖 Reading</option>
+        <option value="park">🌳 Park / outdoor</option>
+        <option value="game">🎮 Game / screen time</option>
+        <option value="homework">📚 Homework</option>
+        <option value="chores">🧹 Chores</option>
+        <option value="creative">🎨 Creative play</option>
+        <option value="free">🧺 Free play</option>
+        <option value="bath">🛁 Bath / wash up</option>
+        <option value="bedtime">🌙 Bedtime routine</option>
+        <option value="other">⭐ Other</option>
+      </select>
+    </div>
+  </div>
+  <button class="add-btn full" onclick="addActivity()">+ Add to this routine</button>
+  <button class="add-btn full secondary" onclick="resetToDefault()">↺ Reset this routine to its default</button>
+</div>
+
+<div class="card">
+  <h2>📖 Reading Log <span class="section-tag" id="readingChildTag"></span></h2>
+  <div class="row">
+    <div class="field">
+      <label>Pages read on this date</label>
+      <input type="number" id="readingPages" min="0" placeholder="e.g. 12">
+    </div>
+    <button class="add-btn" onclick="saveReadingPages()">Save</button>
+  </div>
+  <div id="readingHistory"></div>
+</div>
+
+<div class="card">
+  <h2>🏫 Term Dates</h2>
+  <div id="termList"></div>
+  <div class="row">
+    <div class="field" style="flex:2;"><label>Label</label><input type="text" id="newTermLabel" placeholder="e.g. Autumn Term, Half Term"></div>
+    <div class="field"><label>Type</label>
+      <select id="newTermType">
+        <option value="school">📚 School term</option>
+        <option value="holiday">🏖️ Holiday</option>
+      </select>
+    </div>
+  </div>
+  <div class="row">
+    <div class="field"><label>Start date</label><input type="date" id="newTermStart"></div>
+    <div class="field"><label>End date</label><input type="date" id="newTermEnd"></div>
+  </div>
+  <button class="add-btn full" onclick="addTerm()">+ Add term period</button>
+</div>
+
+<div class="card">
+  <h2>⚽ Extracurricular Activities</h2>
+  <div id="extraList"></div>
+  <div class="row">
+    <div class="field" style="flex:2;"><label>Activity name</label><input type="text" id="newExtraName" placeholder="e.g. Football practice"></div>
+    <div class="field"><label>Child</label><select id="newExtraChild"></select></div>
+  </div>
+  <div class="row">
+    <div class="field">
+      <label>Repeats on</label>
+      <select id="newExtraDay">
+        <option value="1">Monday</option>
+        <option value="2">Tuesday</option>
+        <option value="3">Wednesday</option>
+        <option value="4">Thursday</option>
+        <option value="5">Friday</option>
+        <option value="6">Saturday</option>
+        <option value="0">Sunday</option>
+      </select>
+    </div>
+    <div class="field"><label>Time</label><input type="time" id="newExtraTime"></div>
+  </div>
+  <div class="row">
+    <div class="field"><label>Location (optional)</label><input type="text" id="newExtraLocation" placeholder="e.g. Community centre"></div>
+  </div>
+  <button class="add-btn full" onclick="addExtra()">+ Add activity</button>
+</div>
+
+<div class="card">
+  <h2>👨‍👩‍👧‍👦 Manage Children</h2>
+  <div id="childManageList"></div>
+  <div class="row">
+    <div class="field" style="flex:2;"><input type="text" id="newChildName" placeholder="Child's name"></div>
+    <button class="add-btn" onclick="addChild()">+ Add child</button>
+  </div>
+</div>
+
+<script>
+const ICONS = {
+  wake: '🌅', meal: '🍽️', water: '💧', reading: '📖', park: '🌳',
+  game: '🎮', homework: '📚', chores: '🧹', creative: '🎨',
+  free: '🧺', bath: '🛁', bedtime: '🌙', other: '⭐'
+};
+
+const DAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+
+const DEFAULT_ROUTINES = {
+  school: [
+    { time: '07:00', activity: 'Wake up', category: 'wake' },
+    { time: '07:15', activity: 'Wash up & get dressed', category: 'bath' },
+    { time: '07:30', activity: 'Breakfast', category: 'meal' },
+    { time: '08:00', activity: 'Water break, get school bag ready', category: 'water' },
+    { time: '15:45', activity: 'Home from school, water break & snack', category: 'water' },
+    { time: '16:15', activity: 'Homework time', category: 'homework' },
+    { time: '17:00', activity: 'Reading time', category: 'reading' },
+    { time: '17:30', activity: 'Park / outdoor time', category: 'park' },
+    { time: '18:00', activity: 'Water break', category: 'water' },
+    { time: '18:15', activity: 'Help with chores', category: 'chores' },
+    { time: '18:45', activity: 'Dinner', category: 'meal' },
+    { time: '19:15', activity: 'Game / screen time', category: 'game' },
+    { time: '19:45', activity: 'Bath time', category: 'bath' },
+    { time: '20:00', activity: 'Wind down (quiet play)', category: 'free' },
+    { time: '20:15', activity: 'Bedtime routine (teeth, story)', category: 'bedtime' }
+  ],
+  holiday: [
+    { time: '08:00', activity: 'Wake up', category: 'wake' },
+    { time: '08:15', activity: 'Wash up & get dressed', category: 'bath' },
+    { time: '08:30', activity: 'Breakfast', category: 'meal' },
+    { time: '09:00', activity: 'Free play', category: 'free' },
+    { time: '09:30', activity: 'Water break', category: 'water' },
+    { time: '10:00', activity: 'Park / outdoor time', category: 'park' },
+    { time: '11:30', activity: 'Snack & water break', category: 'water' },
+    { time: '12:00', activity: 'Lunch', category: 'meal' },
+    { time: '13:00', activity: 'Reading time', category: 'reading' },
+    { time: '13:30', activity: 'Water break', category: 'water' },
+    { time: '14:00', activity: 'Creative play (drawing, building)', category: 'creative' },
+    { time: '15:00', activity: 'Park / outdoor play', category: 'park' },
+    { time: '16:00', activity: 'Water break', category: 'water' },
+    { time: '16:15', activity: 'Game / screen time', category: 'game' },
+    { time: '17:00', activity: 'Help with chores', category: 'chores' },
+    { time: '18:00', activity: 'Dinner', category: 'meal' },
+    { time: '18:30', activity: 'Family time / reading', category: 'reading' },
+    { time: '19:00', activity: 'Bath time', category: 'bath' },
+    { time: '19:30', activity: 'Wind down (quiet play)', category: 'free' },
+    { time: '20:30', activity: 'Bedtime routine (teeth, story)', category: 'bedtime' }
+  ]
+};
+DEFAULT_ROUTINES.default = DEFAULT_ROUTINES.school;
+
+const ROUTINE_TYPE_LABELS = {
+  school: '📚 School day routine',
+  holiday: '🏖️ Holiday routine',
+  default: '📋 Default routine (no term set)'
+};
+
+const STORAGE_KEY = 'kids-daily-routine-data-v3';
+
+let routines = { school: [], holiday: [], default: [] };
+let itemIdCounter = 0;
+let children = [];
+let childIdCounter = 0;
+let activeChildId = null;
+let completions = {};     // { "dateStr": { "childId": { "itemId": true } } }
+let readingLog = {};      // { "dateStr": { "childId": pages } }
+let terms = [];
+let termIdCounter = 0;
+let extras = [];
+let extraIdCounter = 0;
+let selectedDate = todayStr();
+
+function todayStr(){
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function toDateStr(y,m,d){
+  return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+}
+
+function getActiveRoutineType(dateStr){
+  const match = terms.find(t => dateStr >= t.start && dateStr <= t.end);
+  return match ? match.type : 'default';
+}
+
+function load(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw){ seedDefault(); return; }
+    const data = JSON.parse(raw);
+    routines = data.routines && (data.routines.school || data.routines.holiday || data.routines.default)
+      ? data.routines
+      : { school: [], holiday: [], default: [] };
+    itemIdCounter = data.itemIdCounter || 0;
+    children = data.children && data.children.length ? data.children : [];
+    childIdCounter = data.childIdCounter || 0;
+    completions = data.completions || {};
+    readingLog = data.readingLog || {};
+    terms = data.terms || [];
+    termIdCounter = data.termIdCounter || 0;
+    extras = data.extras || [];
+    extraIdCounter = data.extraIdCounter || 0;
+
+    const hasAnyRoutine = (routines.school && routines.school.length) || (routines.holiday && routines.holiday.length) || (routines.default && routines.default.length);
+    if(!hasAnyRoutine || children.length === 0) seedDefault();
+    activeChildId = children.length ? children[0].id : null;
+  }catch(err){
+    console.error('Could not load data:', err);
+    seedDefault();
+  }
+}
+
+function seedDefault(){
+  const hasAnyRoutine = (routines.school && routines.school.length) || (routines.holiday && routines.holiday.length) || (routines.default && routines.default.length);
+  if(!hasAnyRoutine){
+    routines.school = DEFAULT_ROUTINES.school.map(item => ({ id: itemIdCounter++, ...item }));
+    routines.holiday = DEFAULT_ROUTINES.holiday.map(item => ({ id: itemIdCounter++, ...item }));
+    routines.default = DEFAULT_ROUTINES.default.map(item => ({ id: itemIdCounter++, ...item }));
+  }
+  if(children.length === 0){
+    children = [
+      { id: childIdCounter++, name: 'Child 1' },
+      { id: childIdCounter++, name: 'Child 2' },
+      { id: childIdCounter++, name: 'Child 3' }
+    ];
+  }
+  activeChildId = children[0].id;
+  save();
+}
+
+function save(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      routines, itemIdCounter, children, childIdCounter,
+      completions, readingLog, terms, termIdCounter, extras, extraIdCounter
+    }));
+  }catch(err){
+    console.error('Could not save data:', err);
+  }
+}
+
+// ---------- Date navigation ----------
+function changeDay(delta){
+  const d = new Date(selectedDate + 'T00:00:00');
+  d.setDate(d.getDate() + delta);
+  selectedDate = toDateStr(d.getFullYear(), d.getMonth(), d.getDate());
+  document.getElementById('dateInput').value = selectedDate;
+  renderAll();
+}
+
+function onDateChange(){
+  const val = document.getElementById('dateInput').value;
+  if(val){ selectedDate = val; renderAll(); }
+}
+
+// ---------- Children ----------
+function selectChild(id){
+  activeChildId = id;
+  renderAll();
+}
+
+function addChild(){
+  const input = document.getElementById('newChildName');
+  const name = input.value.trim();
+  if(!name) return;
+  const id = childIdCounter++;
+  children.push({ id, name });
+  activeChildId = id;
+  input.value = '';
+  save();
+  renderAll();
+}
+
+function renameChild(id, newName){
+  newName = newName.trim();
+  if(!newName) return;
+  const child = children.find(c => c.id === id);
+  if(child) child.name = newName;
+  save();
+  renderChildTabs();
+  renderChildManageList();
+  renderExtraChildOptions();
+  renderReading();
+  renderExtraList();
+}
+
+function deleteChild(id){
+  if(children.length <= 1){ alert('At least one child is needed.'); return; }
+  if(!confirm('Remove this child? Their logged progress will stay in storage but no longer be shown.')) return;
+  children = children.filter(c => c.id !== id);
+  if(activeChildId === id) activeChildId = children[0].id;
+  save();
+  renderAll();
+}
+
+// ---------- Routine + completions ----------
+function toggleDone(itemId){
+  if(!completions[selectedDate]) completions[selectedDate] = {};
+  if(!completions[selectedDate][activeChildId]) completions[selectedDate][activeChildId] = {};
+  completions[selectedDate][activeChildId][itemId] = !completions[selectedDate][activeChildId][itemId];
+  save();
+  renderRoutine();
+}
+
+function deleteActivity(id){
+  if(!confirm('Remove this activity?')) return;
+  // find which routine type contains this item and remove it from there
+  for(const type of ['school','holiday','default']){
+    const before = routines[type].length;
+    routines[type] = routines[type].filter(r => r.id !== id);
+    if(routines[type].length !== before) break;
+  }
+  save();
+  renderRoutine();
+  renderEditRoutineList();
+}
+
+function getEditingType(){
+  const el = document.getElementById('editRoutineType');
+  return el ? el.value : getActiveRoutineType(selectedDate);
+}
+
+function addActivity(){
+  const time = document.getElementById('newTime').value;
+  const activity = document.getElementById('newActivity').value.trim();
+  const category = document.getElementById('newCategory').value;
+  if(!time || !activity){ alert('Please add a time and an activity name.'); return; }
+  const type = getEditingType();
+  routines[type].push({ id: itemIdCounter++, time, activity, category });
+  document.getElementById('newActivity').value = '';
+  save();
+  renderRoutine();
+  renderEditRoutineList();
+}
+
+function resetToDefault(){
+  const type = getEditingType();
+  if(!confirm(`This replaces the ${ROUTINE_TYPE_LABELS[type]} with its default routine. Continue?`)) return;
+  routines[type] = DEFAULT_ROUTINES[type].map(item => ({ id: itemIdCounter++, ...item }));
+  save();
+  renderRoutine();
+  renderEditRoutineList();
+}
+
+function toggleEditPanel(){
+  const panel = document.getElementById('editPanel');
+  const isOpen = panel.style.display !== 'none';
+  panel.style.display = isOpen ? 'none' : 'block';
+  document.getElementById('editToggleBtn').textContent = isOpen ? '✏️ Edit the routines' : '✕ Close editor';
+  if(!isOpen){
+    document.getElementById('editRoutineType').value = getActiveRoutineType(selectedDate);
+    renderEditRoutineList();
+  }
+}
+
+function renderEditRoutineList(){
+  const type = getEditingType();
+  const list = document.getElementById('editRoutineList');
+  const sorted = [...routines[type]].sort((a,b) => a.time.localeCompare(b.time));
+  if(sorted.length === 0){
+    list.innerHTML = '<div class="empty">No activities in this routine yet.</div>';
+    return;
+  }
+  list.innerHTML = sorted.map(item => `
+    <div class="list-row">
+      <div class="main">${ICONS[item.category] || '⭐'} ${item.activity.replace(/</g,'&lt;')}
+        <div class="meta">${fmtTime(item.time)}</div>
+      </div>
+      <button class="del" onclick="deleteActivity(${item.id})">✕</button>
+    </div>
+  `).join('');
+}
+
+// ---------- Reading log ----------
+function saveReadingPages(){
+  const val = parseInt(document.getElementById('readingPages').value, 10);
+  if(isNaN(val) || val < 0){ alert('Please enter a valid number of pages.'); return; }
+  if(!readingLog[selectedDate]) readingLog[selectedDate] = {};
+  readingLog[selectedDate][activeChildId] = val;
+  save();
+  renderReading();
+}
+
+function renderReading(){
+  const child = children.find(c => c.id === activeChildId);
+  document.getElementById('readingChildTag').textContent = child ? child.name : '';
+  const existing = readingLog[selectedDate] && readingLog[selectedDate][activeChildId];
+  document.getElementById('readingPages').value = existing !== undefined ? existing : '';
+
+  // show last 7 days for this child
+  const rows = [];
+  const base = new Date(selectedDate + 'T00:00:00');
+  for(let i = 1; i <= 6; i++){
+    const d = new Date(base);
+    d.setDate(d.getDate() - i);
+    const ds = toDateStr(d.getFullYear(), d.getMonth(), d.getDate());
+    const pages = readingLog[ds] && readingLog[ds][activeChildId];
+    if(pages !== undefined){
+      rows.push(`<div class="list-row"><div class="main">${ds}</div><div class="meta">${pages} pages</div></div>`);
+    }
+  }
+  document.getElementById('readingHistory').innerHTML = rows.length
+    ? rows.join('')
+    : '<div class="empty">No earlier entries in the last week.</div>';
+}
+
+// ---------- Terms ----------
+function addTerm(){
+  const label = document.getElementById('newTermLabel').value.trim();
+  const type = document.getElementById('newTermType').value;
+  const start = document.getElementById('newTermStart').value;
+  const end = document.getElementById('newTermEnd').value;
+  if(!label || !start || !end){ alert('Please add a label, start date, and end date.'); return; }
+  terms.push({ id: termIdCounter++, label, type, start, end });
+  document.getElementById('newTermLabel').value = '';
+  document.getElementById('newTermStart').value = '';
+  document.getElementById('newTermEnd').value = '';
+  save();
+  renderTerms();
+  renderTermBadge();
+}
+
+function deleteTerm(id){
+  terms = terms.filter(t => t.id !== id);
+  save();
+  renderTerms();
+  renderTermBadge();
+}
+
+function renderTerms(){
+  const list = document.getElementById('termList');
+  if(terms.length === 0){
+    list.innerHTML = '<div class="empty">No term dates added yet.</div>';
+    return;
+  }
+  const sorted = [...terms].sort((a,b) => a.start.localeCompare(b.start));
+  list.innerHTML = sorted.map(t => `
+    <div class="list-row">
+      <div class="main">${t.type === 'school' ? '📚' : '🏖️'} ${t.label.replace(/</g,'&lt;')}
+        <div class="meta">${t.start} to ${t.end}</div>
+      </div>
+      <button class="del" onclick="deleteTerm(${t.id})">✕</button>
+    </div>
+  `).join('');
+}
+
+function renderTermBadge(){
+  const badge = document.getElementById('termBadge');
+  const match = terms.find(t => selectedDate >= t.start && selectedDate <= t.end);
+  if(!match){
+    badge.className = 'term-badge none';
+    badge.textContent = 'No term set for this date';
+    return;
+  }
+  if(match.type === 'school'){
+    badge.className = 'term-badge school';
+    badge.textContent = `📚 ${match.label} — school day`;
+  } else {
+    badge.className = 'term-badge holiday';
+    badge.textContent = `🏖️ ${match.label} — holiday`;
+  }
+}
+
+// ---------- Extracurriculars ----------
+function addExtra(){
+  const name = document.getElementById('newExtraName').value.trim();
+  const childId = document.getElementById('newExtraChild').value;
+  const day = document.getElementById('newExtraDay').value;
+  const time = document.getElementById('newExtraTime').value;
+  const location = document.getElementById('newExtraLocation').value.trim();
+  if(!name || !time){ alert('Please add an activity name and time.'); return; }
+  extras.push({ id: extraIdCounter++, name, childId, day, time, location });
+  document.getElementById('newExtraName').value = '';
+  document.getElementById('newExtraLocation').value = '';
+  save();
+  renderExtraList();
+  renderRoutine();
+}
+
+function deleteExtra(id){
+  extras = extras.filter(e => e.id !== id);
+  save();
+  renderExtraList();
+  renderRoutine();
+}
+
+function renderExtraChildOptions(){
+  const select = document.getElementById('newExtraChild');
+  const prev = select.value;
+  select.innerHTML = '<option value="all">All children</option>' +
+    children.map(c => `<option value="${c.id}">${c.name.replace(/</g,'&lt;')}</option>`).join('');
+  if([...select.options].some(o => o.value === prev)) select.value = prev;
+}
+
+function renderExtraList(){
+  const list = document.getElementById('extraList');
+  if(extras.length === 0){
+    list.innerHTML = '<div class="empty">No extracurricular activities added yet.</div>';
+    return;
+  }
+  const sorted = [...extras].sort((a,b) => (a.day - b.day) || a.time.localeCompare(b.time));
+  list.innerHTML = sorted.map(e => {
+    const child = e.childId === 'all' ? 'All children' : (children.find(c => c.id == e.childId)?.name || 'Unknown');
+    const locText = e.location ? ` · ${e.location.replace(/</g,'&lt;')}` : '';
+    return `
+      <div class="list-row">
+        <div class="main">${e.name.replace(/</g,'&lt;')}
+          <div class="meta">${DAY_NAMES[e.day]}s, ${fmtTime(e.time)} · ${child.replace ? child.replace(/</g,'&lt;') : child}${locText}</div>
+        </div>
+        <button class="del" onclick="deleteExtra(${e.id})">✕</button>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderTodayExtras(){
+  const d = new Date(selectedDate + 'T00:00:00');
+  const dow = String(d.getDay());
+  return extras.filter(e => String(e.day) === dow && (e.childId === 'all' || e.childId == activeChildId));
+}
+
+// ---------- Rendering ----------
+function renderChildTabs(){
+  const wrap = document.getElementById('childTabs');
+  wrap.innerHTML = children.map(c => `
+    <button class="child-tab ${c.id === activeChildId ? 'active' : ''}" onclick="selectChild(${c.id})">${c.name.replace(/</g,'&lt;')}</button>
+  `).join('');
+}
+
+function renderChildManageList(){
+  const list = document.getElementById('childManageList');
+  list.innerHTML = children.map(c => `
+    <div class="list-row">
+      <input type="text" class="child-name-input" value="${c.name.replace(/"/g,'&quot;')}" onchange="renameChild(${c.id}, this.value)">
+      <button class="del" onclick="deleteChild(${c.id})">✕</button>
+    </div>
+  `).join('');
+}
+
+function renderRoutine(){
+  const activeType = getActiveRoutineType(selectedDate);
+  const sorted = [...routines[activeType]].sort((a,b) => a.time.localeCompare(b.time));
+  const list = document.getElementById('routineList');
+  const dayCompletions = (completions[selectedDate] && completions[selectedDate][activeChildId]) || {};
+
+  if(sorted.length === 0){
+    list.innerHTML = `<div class="empty">No activities yet in the ${ROUTINE_TYPE_LABELS[activeType]}. Add some in the editor below, or reset to its default.</div>`;
+  } else {
+    list.innerHTML = sorted.map(item => {
+      const done = !!dayCompletions[item.id];
+      return `
+        <div class="routine-item ${done ? 'done' : ''}">
+          <input type="checkbox" ${done ? 'checked' : ''} onchange="toggleDone(${item.id})">
+          <span class="icon">${ICONS[item.category] || '⭐'}</span>
+          <div class="info">
+            <div class="time">${fmtTime(item.time)}</div>
+            <div class="activity ${done ? 'done' : ''}">${item.activity.replace(/</g,'&lt;')}</div>
+          </div>
+          <div class="edit-controls">
+            <button onclick="deleteActivity(${item.id})" title="Remove">✕</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  const todaysExtras = renderTodayExtras();
+  if(todaysExtras.length){
+    list.innerHTML += todaysExtras.map(e => `
+      <div class="routine-item" style="border-color:var(--purple); background:#faf7ff;">
+        <input type="checkbox" disabled>
+        <span class="icon">⚽</span>
+        <div class="info">
+          <div class="time">${fmtTime(e.time)}</div>
+          <div class="activity">${e.name.replace(/</g,'&lt;')} <span class="section-tag">extracurricular</span></div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  const total = sorted.length;
+  const doneCount = sorted.filter(item => dayCompletions[item.id]).length;
+  document.getElementById('progressText').textContent = `${doneCount} of ${total} done`;
+  document.getElementById('progressFill').style.width = total ? `${(doneCount/total)*100}%` : '0%';
+
+  let starDisplay = '';
+  if(total > 0){
+    const fullStars = Math.round((doneCount/total) * 5);
+    starDisplay = '⭐'.repeat(fullStars) + '☆'.repeat(5 - fullStars);
+  }
+  document.getElementById('starsDisplay').textContent = starDisplay;
+}
+
+function fmtTime(t){
+  if(!t) return '';
+  const [h,m] = t.split(':');
+  const hour = parseInt(h,10);
+  const ampm = hour >= 12 ? 'PM' : 'AM';
+  const h12 = ((hour + 11) % 12) + 1;
+  return `${h12}:${m} ${ampm}`;
+}
+
+function renderAll(){
+  document.getElementById('dateInput').value = selectedDate;
+  renderTermBadge();
+  renderChildTabs();
+  renderRoutine();
+  renderReading();
+  renderTerms();
+  renderExtraChildOptions();
+  renderExtraList();
+  renderChildManageList();
+  renderEditRoutineList();
+}
+
+load();
+document.getElementById('dateInput').value = selectedDate;
+renderAll();
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('service-worker.js').catch((err) => {
+      console.error('Service worker registration failed:', err);
+    });
+  });
+}
+
+</script>
+
+</body>
+</html>
